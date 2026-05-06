@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXBOT — Intelligence Artificielle</title>
+
+  <!-- Spline Viewer -->
+  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.61/build/spline-viewer.js"></script>
+
+  <!-- Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+
+  <style>
+    /* ── VARIABLES & RESET ── */
+    :root {
+      --bg: #e4e4e4;
+      /* Light grey matching Spline's background perfectly */
+      --bg-section: #ffffff;
+      --panel: rgba(255, 255, 255, 0.5);
+      /* Glassmorphism panel background */
+      --border: rgba(0, 0, 0, 0.08);
+      /* Minimalistic borders */
+      --text: #111111;
+      /* Dark text for contrast */
+      --muted: #6b6b6b;
+      /* Muted text for secondary info */
+      --accent: #111111;
+      /* Dark sleek accent */
+      --accent-text: #ffffff;
+      /* White text on dark buttons */
+    }
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+      /* Custom cursor */
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── CURSOR ── */
+    #c {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: transform .15s;
+    }
+
+    #ct {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      width: 44px;
+      height: 44px;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      transition: width 0.25s, height 0.25s, background-color 0.25s;
+    }
+
+    /* Enlarge cursor on interactive elements */
+    a:hover~#ct,
+    button:hover~#ct,
+    .nav-btn:hover~#ct {
+      width: 60px;
+      height: 60px;
+      border-color: rgba(0, 0, 0, 0.3);
+      background-color: rgba(0, 0, 0, 0.03);
+    }
+
+    /* ── NAVIGATION ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 500;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5vw;
+      background: rgba(228, 228, 228, 0.4);
+      /* Transparent glassmorphism navigation */
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 16px;
+      letter-spacing: 4px;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 40px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--muted);
+      transition: color .3s;
+      cursor: none;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    .nav-btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 12px 28px;
+      background: var(--accent);
+      color: var(--accent-text);
+      border-radius: 40px;
+      border: none;
+      cursor: none;
+      transition: all .3s ease;
+    }
+
+    .nav-btn:hover {
+      background: #333;
+      transform: scale(1.05);
+    }
+
+    /* ── HERO SECTION ── */
+    #hero {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .spline-container {
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+    }
+
+    spline-viewer {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: none;
+    }
+
+    spline-viewer::part(logo) {
+      display: none !important;
+    }
+
+    .btn-a,
+    .btn-b {
+      padding: 12px 24px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-radius: 40px;
+      cursor: none;
+      text-align: center;
+      transition: all .3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-a {
+      background: var(--accent);
+      color: var(--accent-text);
+      border: none;
+    }
+
+    .btn-a:hover {
+      background: #333;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-b {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-b:hover {
+      border-color: var(--accent);
+      background: rgba(0, 0, 0, 0.02);
+      transform: translateY(-2px);
+    }
+
+    /* Status HUD */
+    .hud-badge {
+      position: absolute;
+      top: 110px;
+      right: 5vw;
+      z-index: 20;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 12px 24px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+      animation: floatY 6s ease-in-out infinite;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.03);
+    }
+
+    .hud-badge-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #111;
+      border-radius: 50%;
+      margin-right: 12px;
+      animation: pulse 2s infinite;
+    }
+
+    .hud-badge-txt {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--text);
+    }
+
+    /* ── LAYOUT & TYPOGRAPHY ── */
+    section.content {
+      position: relative;
+      z-index: 10;
+      padding: 140px 5vw;
+      background: var(--bg-section);
+    }
+
+    .s-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .s-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .s-label::before {
+      content: '';
+      width: 48px;
+      height: 1px;
+      background: var(--muted);
+    }
+
+    .s-title {
+      font-size: clamp(36px, 4vw, 64px);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      color: var(--text);
+    }
+
+    .s-title b {
+      font-weight: 700;
+    }
+
+    .s-body {
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--muted);
+      margin-top: 32px;
+      max-width: 640px;
+    }
+
+    /* ── ARCHITECTURE SECTION ── */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 100px;
+      align-items: center;
+    }
+
+    #wire-canvas {
+      width: 100%;
+      height: 540px;
+      border-radius: 32px;
+      background: #f8f8f8;
+      border: 1px solid var(--border);
+    }
+
+    /* ── CAPABILITIES SECTION ── */
+    .caps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 80px;
+    }
+
+    .cap {
+      padding: 48px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: #f9f9f9;
+      transition: all .4s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: none;
+    }
+
+    .cap:hover {
+      background: #fff;
+      transform: translateY(-12px);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .cap-n {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 24px;
+      display: inline-block;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--text);
+    }
+
+    .cap-t {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .cap-d {
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    /* ── NEURAL SECTION ── */
+    #neural {
+      background: var(--bg);
+    }
+
+    #nc-wrap {
+      height: 600px;
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+      background: #ffffff;
+      margin-top: 80px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.02);
+    }
+
+    #nc {
+      width: 100%;
+      height: 100%;
+    }
+
+    .nc-lbl {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+      padding: 10px 20px;
+      border-radius: 40px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--bg);
+      padding: 100px 5vw 40px;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+
+    .f-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 24px;
+      letter-spacing: 8px;
+      color: var(--text);
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    .f-copy {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-top: 60px;
+      text-transform: uppercase;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fu {
+      from {
+        opacity: 0;
+        transform: translateY(24px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: .4;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.2)
+      }
+    }
+
+    @keyframes floatY {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-12px)
+      }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:1024px) {
+      nav {
+        padding: 0 30px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .about-grid {
+        grid-template-columns: 1fr;
+        gap: 60px;
+      }
+
+      .caps-grid {
+        grid-template-columns: 1fr;
+      }
+
+      section.content {
+        padding: 100px 30px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Custom Cursor -->
+  <div id="c"></div>
+  <div id="ct"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="logo">NEXBOT</div>
+    <ul class="nav-links">
+      <li><a href="#about">Architecture</a></li>
+      <li><a href="#caps">Capacités</a></li>
+      <li><a href="#neural">Réseau Neuronal</a></li>
+    </ul>
+    <button class="nav-btn"
+      onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">Commander</button>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="hero">
+    <div class="spline-container">
+      <spline-viewer url="https://prod.spline.design/zIKjuJgIdjevxPAc/scene.splinecode"
+        loading-anim-type="spinner-small-light" events-target="global">
+      </spline-viewer>
+    </div>
+
+    <div class="hud-badge">
+      <span class="hud-badge-dot"></span>
+      <span class="hud-badge-txt">CONNEXION ÉTABLIE</span>
+    </div>
+
+    <!-- Unobtrusive scroll hint -->
+    <div
+      style="position:absolute; bottom:30px; left:50%; transform:translateX(-50%); text-align:center; pointer-events:none; opacity:0.6; animation: floatY 4s infinite;">
+      <span
+        style="font-family:'Space Mono', monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text); font-weight:700;">Défiler
+        pour explorer</span>
+    </div>
+  </section>
+
+  <!-- Intro Section -->
+  <section id="intro" class="content" style="padding-bottom: 40px; padding-top: 100px;">
+    <div class="s-container" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+      <div class="s-label" style="justify-content: center;">00 — Conception Harmonique</div>
+      <h1 class="s-title" style="margin-bottom: 24px;">
+        <strong>NEXBOT</strong><br>Élégance & Intelligence.
+      </h1>
+      <p class="s-body" style="margin-top: 0; margin-bottom: 40px;">
+        Une harmonie parfaite entre la pureté du code et la complexité des matériaux. Interagissez avec le modèle
+        ci-dessus pour éveiller la conscience numérique.
+      </p>
+      <div style="display: flex; gap: 16px; justify-content: center;">
+        <button class="btn-a" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">Découvrir
+          l'ingénierie</button>
+        <button class="btn-b" onclick="document.getElementById('neural').scrollIntoView({behavior:'smooth'})">Voir le
+          réseau</button>
+      </div>
+    </div>
+
+    <!-- Architecture Section -->
+    <section id="about" class="content">
+      <div class="s-container">
+        <div class="about-grid">
+          <div>
+            <div class="s-label">01 — Ingénierie de précision</div>
+            <h2 class="s-title">Une <b>Anatomie</b><br>Redéfinie</h2>
+            <p class="s-body">
+              Chaque articulation est pensée dans un souci minimaliste et fonctionnel. NEXBOT allie des matériaux
+              composites premium à des moteurs de couple ultra-sensibles, offrant 32 degrés de liberté pour une fluidité
+              sans pareille.
+            </p>
+          </div>
+          <canvas id="wire-canvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Capabilities Section -->
+    <section id="caps" class="content">
+      <div class="s-container">
+        <div style="text-align:center; margin-bottom: 80px;">
+          <div class="s-label" style="justify-content:center">02 — Performances Absolues</div>
+          <h2 class="s-title">L'Écosystème de <b>l'Excellence</b></h2>
+        </div>
+        <div class="caps-grid">
+          <div class="cap">
+            <div class="cap-n">01</div>
+            <div class="cap-t">Perception Spatiale</div>
+            <div class="cap-d">Capteurs optiques haute-fidélité intégrés derrière une visière fumée. Cartographie
+              environnementale millimétrique.</div>
+          </div>
+          <div class="cap">
+            <div class="cap-n">02</div>
+            <div class="cap-t">NPU Embarqué</div>
+            <div class="cap-d">Traitement adaptatif de 200 TOPS. Le cœur neuronal traite l'inférence localement,
+              éliminant
+              toute latence.</div>
+          </div>
+          <div class="cap">
+            <div class="cap-n">03</div>
+            <div class="cap-t">Dynamique Fluide</div>
+            <div class="cap-d">Kinématique prédictive couplée à un apprentissage par renforcement garantissant
+              l'élégance
+              du mouvement.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Neural Network Section -->
+    <section id="neural" class="content">
+      <div class="s-container">
+        <div style="text-align:center">
+          <div class="s-label" style="justify-content:center">03 — Le Cerveau Numérique</div>
+          <h2 class="s-title">Pulsation <b>Neuronale</b></h2>
+          <p class="s-body" style="margin:24px auto 0;text-align:center;max-width:500px;">
+            Visualisation instantanée de l'activation des couches d'inférence en réponse aux stimuli physiques.
+          </p>
+        </div>
+        <div id="nc-wrap">
+          <canvas id="nc"></canvas>
+          <div class="nc-lbl">INTERACTION EN TEMPS RÉEL</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="f-logo">NEXBOT</div>
+      <p style="font-size:15px;color:var(--muted);max-width:480px;margin:0 auto;line-height:1.7">Le summum de la
+        robotique
+        intelligente, mariant sophistication algorithmique et design minimaliste.</p>
+      <p class="f-copy">© 2025 NEXBOT IA. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+      // --- Custom Cursor Logic ---
+      const cur = document.getElementById('c');
+      const curT = document.getElementById('ct');
+      let mx = 0, my = 0, tx = 0, ty = 0;
+      document.addEventListener('mousemove', e => {
+        mx = e.clientX;
+        my = e.clientY;
+        // Expand external ring when hovering buttons or links (handled partly by CSS hover ~)
+      });
+      (function tick() {
+        cur.style.left = mx + 'px';
+        cur.style.top = my + 'px';
+        tx += (mx - tx) * 0.18;
+        ty += (my - ty) * 0.18;
+        curT.style.left = tx + 'px';
+        curT.style.top = ty + 'px';
+        requestAnimationFrame(tick);
+      })();
+
+      // --- Wireframe Robot Canvas ---
+      const wc = document.getElementById('wire-canvas');
+      const wctx = wc.getContext('2d');
+      function rsWC() { wc.width = wc.offsetWidth; wc.height = wc.offsetHeight; }
+      rsWC(); window.addEventListener('resize', rsWC);
+
+      // Abstract representation of joints
+      const J = [
+        [.50, .20, 10], [.50, .28, 6], [.50, .38, 12], [.36, .40, 7],
+        [.64, .40, 7], [.28, .52, 6], [.72, .52, 6], [.24, .64, 5],
+        [.76, .64, 5], [.50, .54, 9], [.43, .68, 6], [.57, .68, 6],
+        [.41, .84, 5], [.59, .84, 5]
+      ];
+      const B = [[0, 1], [1, 2], [2, 3], [2, 4], [3, 5], [4, 6], [5, 7], [6, 8], [2, 9], [9, 10], [9, 11], [10, 12], [11, 13]];
+      let wt = 0;
+      (function drawW() {
+        requestAnimationFrame(drawW); wt += 0.015;
+        if (!wc.width) return;
+        const W = wc.width, H = wc.height;
+        wctx.clearRect(0, 0, W, H);
+
+        // Draw Light Grid
+        wctx.strokeStyle = 'rgba(0,0,0,0.03)'; wctx.lineWidth = 1;
+        for (let x = 0; x < W; x += 48) { wctx.beginPath(); wctx.moveTo(x, 0); wctx.lineTo(x, H); wctx.stroke(); }
+        for (let y = 0; y < H; y += 48) { wctx.beginPath(); wctx.moveTo(0, y); wctx.lineTo(W, y); wctx.stroke(); }
+
+        // Scanline effect
+        const scanY = (wt * 300) % H;
+        wctx.beginPath(); wctx.moveTo(0, scanY); wctx.lineTo(W, scanY);
+        wctx.strokeStyle = 'rgba(0,0,0,0.05)'; wctx.lineWidth = 1; wctx.stroke();
+
+        // Bones
+        B.forEach(([a, b]) => {
+          const ja = J[a], jb = J[b];
+          const ax = ja[0] * W, ay = ja[1] * H, bx = jb[0] * W, by = jb[1] * H;
+          wctx.beginPath(); wctx.moveTo(ax, ay); wctx.lineTo(bx, by);
+          wctx.strokeStyle = 'rgba(0,0,0,0.2)'; wctx.lineCap = 'round'; wctx.lineWidth = 2.5; wctx.stroke();
+        });
+
+        // Joints
+        J.forEach(([cx, cy, r], i) => {
+          const x = cx * W, y = cy * H;
+          const pulse = 1 + Math.sin(wt * 2 + i) * 0.2;
+          wctx.beginPath(); wctx.arc(x, y, r * pulse, 0, Math.PI * 2);
+          wctx.fillStyle = '#ffffff'; wctx.fill();
+          wctx.strokeStyle = '#111111'; wctx.lineWidth = 2; wctx.stroke();
+        });
+      })();
+
+      // --- Neural Network Canvas ---
+      const nc = document.getElementById('nc');
+      const nctx = nc.getContext('2d');
+      const rsNC = () => { nc.width = nc.offsetWidth; nc.height = nc.offsetHeight; };
+      rsNC(); window.addEventListener('resize', () => { rsNC(); buildN(); });
+
+      const layers = [4, 7, 7, 5];
+      const nodes = [];
+      let nmx = 0.5, nmy = 0.5;
+      document.getElementById('nc-wrap').addEventListener('mousemove', e => {
+        const r = nc.getBoundingClientRect();
+        nmx = (e.clientX - r.left) / r.width;
+        nmy = (e.clientY - r.top) / r.height;
+      });
+
+      function buildN() {
+        nodes.length = 0;
+        const W = nc.width, H = nc.height, ls = W / (layers.length + 1);
+        layers.forEach((c, li) => {
+          const x = ls * (li + 1), ns = H / (c + 1);
+          for (let ni = 0; ni < c; ni++) {
+            nodes.push({ x, y: ns * (ni + 1), l: li, i: ni, a: Math.random() });
+          }
+        });
+      }
+      buildN();
+
+      let nt = 0;
+      (function animN() {
+        requestAnimationFrame(animN); nt += 0.02;
+        if (!nc.width) return;
+        nctx.clearRect(0, 0, nc.width, nc.height);
+
+        // Update node activations
+        nodes.forEach(n => { n.a = 0.5 + 0.5 * Math.sin(nt * 1.2 + n.l * 3 + n.i + (nmx + nmy) * 8); });
+
+        // Draw connections
+        for (let li = 0; li < layers.length - 1; li++) {
+          const fr = nodes.filter(n => n.l === li), to = nodes.filter(n => n.l === li + 1);
+          fr.forEach(fn => to.forEach(tn => {
+            const s = (fn.a + tn.a) / 2;
+            nctx.beginPath(); nctx.moveTo(fn.x, fn.y); nctx.lineTo(tn.x, tn.y);
+            nctx.strokeStyle = `rgba(0,0,0,${s * 0.15})`;
+            nctx.lineWidth = Math.max(0.5, s * 2);
+            nctx.stroke();
+          }));
+        }
+
+        // Draw nodes
+        nodes.forEach(n => {
+          const r = 5 + n.a * 4;
+          nctx.beginPath();
+          nctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+          nctx.fillStyle = `rgba(17,17,17,${0.2 + n.a * 0.8})`;
+          nctx.fill();
+
+          // Outer glow ring
+          nctx.beginPath();
+          nctx.arc(n.x, n.y, r * 2.5, 0, Math.PI * 2);
+          nctx.strokeStyle = `rgba(17,17,17,${n.a * 0.1})`;
+          nctx.stroke();
+        });
+      })();
+    </script>
+</body>
+
+</html>
